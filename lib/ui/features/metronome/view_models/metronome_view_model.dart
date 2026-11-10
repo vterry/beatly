@@ -91,9 +91,13 @@ class MetronomeViewModel extends ChangeNotifier {
     );
     _config = _config.copyWith(beatPattern: updated);
     if (_isPlaying) {
+      _activeBeatIndex = 0;
+      _pulseStopwatch = Stopwatch()..start();
+      _restartVisualPulseTicker();
       await _audioPort.updatePattern(
         _config.beatPattern,
         subdivision: _config.subdivision,
+        resetCycle: true,
       );
     }
     notifyListeners();
@@ -118,13 +122,14 @@ class MetronomeViewModel extends ChangeNotifier {
     final clamped = count.clamp(1, 16);
     if (clamped == _config.beatsPerBar) return;
     _config = _config.copyWith(beatsPerBar: clamped);
-    if (_activeBeatIndex >= clamped) {
-      _activeBeatIndex = 0;
-    }
+    _activeBeatIndex = 0;
     if (_isPlaying) {
+      _pulseStopwatch = Stopwatch()..start();
+      _restartVisualPulseTicker();
       await _audioPort.updatePattern(
         _config.beatPattern,
         subdivision: _config.subdivision,
+        resetCycle: true,
       );
     }
     notifyListeners();

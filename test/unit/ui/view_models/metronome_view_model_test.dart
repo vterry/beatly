@@ -105,6 +105,32 @@ void main() {
       expect(audioPort.activePattern.length, equals(7));
       expect(audioPort.activeSubdivision, equals(2));
     });
+
+    test(
+      'TC-03.12: ao alterar beatsPerBar durante a execução (ex: 4 para 5 ou 6), activeBeatIndex e tempo forte reiniciam sincronizados',
+      () async {
+        await viewModel.togglePlay();
+        expect(viewModel.isPlaying, isTrue);
+
+        // Avança 2 batidas
+        clockPort.advance(const Duration(milliseconds: 1000));
+        expect(viewModel.activeBeatIndex, isNonNegative);
+
+        // Altera compasso de 4 para 5 batidas
+        await viewModel.setBeatsPerBar(5);
+        expect(viewModel.beatsPerBar, equals(5));
+        expect(viewModel.beatPattern.length, equals(5));
+        expect(viewModel.beatPattern[0], equals(BeatEmphasis.forte));
+        expect(viewModel.activeBeatIndex, equals(0)); // Reinicia com precisão no tempo 1 (forte)
+
+        // Altera para 6 batidas
+        await viewModel.setBeatsPerBar(6);
+        expect(viewModel.beatsPerBar, equals(6));
+        expect(viewModel.beatPattern.length, equals(6));
+        expect(viewModel.beatPattern[0], equals(BeatEmphasis.forte));
+        expect(viewModel.activeBeatIndex, equals(0));
+      },
+    );
   });
 }
 

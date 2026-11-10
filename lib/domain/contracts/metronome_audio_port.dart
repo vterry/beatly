@@ -16,9 +16,11 @@ abstract interface class MetronomeAudioPort {
   Future<void> updateBpm(int bpm);
 
   /// Atualiza o padrão de acentuação/volume dos pulsos e subdivisão.
+  /// Se [resetCycle] for true, reinicia a contagem para que o próximo clique seja o tempo forte.
   Future<void> updatePattern(
     List<BeatEmphasis> pattern, {
     int subdivision = 1,
+    bool resetCycle = false,
   });
 
   /// Interrompe imediatamente a emissão sonora do metrônomo.

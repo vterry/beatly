@@ -116,15 +116,22 @@ class AndroidMetronomeAudioService implements MetronomeAudioPort {
   Future<void> updatePattern(
     List<BeatEmphasis> pattern, {
     int subdivision = 1,
+    bool resetCycle = false,
   }) async {
+    final sizeChanged = pattern.length != _pattern.length;
     _pattern = List<BeatEmphasis>.from(pattern);
     _subdivision = subdivision.clamp(1, 4);
+    if (resetCycle || sizeChanged) {
+      _beatIndex = 0;
+      _subdivisionIndex = 0;
+    }
     if (_isRunning) {
       _scheduleTicks();
     }
     await _invokeNativeSafe('updatePattern', {
       'pattern': _pattern.map((e) => e.name).toList(),
       'subdivision': _subdivision,
+      'resetCycle': resetCycle || sizeChanged,
     });
   }
 

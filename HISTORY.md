@@ -293,3 +293,23 @@ Este documento registra a evolução incremental de cada etapa do projeto **Beat
     - `analyze_files`: **0 erros e 0 warnings** em todo o código Dart.
     - `run_tests`: **132/132 testes aprovados** (100% GREEN), incluindo novos testes unitários e de widget para ajustes do metrônomo no treino.
 - **Status**: Concluído e pronto para compilação do APK Release.
+
+### Iteração 16 — Sincronismo do Tempo Forte em Novos Compassos e Expansão Ergonômica da Divisão de Tempo
+- **Data/Hora**: 2026-11-09
+- **Etapa**: Correção de Deslocamento do Tempo Forte e Ampliação da Caixa de Divisão de Tempo
+- **Ações Realizadas**:
+  - **1. Metrônomo (Preservação Absoluta da Referência do Tempo Forte)**:
+    - **Causa Raiz**: Ao alterar `beatsPerBar` (ex.: de 4 para 5 ou 6 pulsos), o áudio nativo (`BeatlyAudioEngine.kt`) mantinha o `currentBeatIndex` correndo no meio do compasso sem reiniciar a cabeça do ciclo, e o `_pulseStopwatch` do Flutter calculava o índice pelo tempo total acumulado (`elapsed / msPerBeat % newBeats`), gerando dessincronia sonora e visual onde o tempo forte (clique agudo) tocava fora do tempo 1.
+    - **Solução no Motor Nativo**: Adicionado parâmetro `resetCycle` e detecção automática de mudança de tamanho (`pattern.size != activePattern.size`) em `BeatlyAudioEngine.kt`. O ciclo é imediatamente zerado (`currentBeatIndex = 0`, `currentSubdivisionIndex = 0`, `resetRequested = true`), garantindo que o próximo clique soado seja obrigatoriamente o **tempo forte (tempo 1)**.
+    - **Solução no ViewModel**: Em `MetronomeViewModel.setBeatsPerBar(int count)` e `resetBeatPatternToDefault()`, o cronômetro visual `_pulseStopwatch` é reiniciado e `_activeBeatIndex` é cravado em `0`, mantendo o LED âmbar do tempo forte e o áudio nativo 100% em fase.
+  - **2. Caixa de Divisão de Tempo (Ergonomia Ampla e Fácil Navegação)**:
+    - **Botões de Passo do Compasso**: Aumentados de 28x28px para 38x38px com ícones Material `remove_rounded` e `add_rounded`, com touch target confortável e display central mono de 44px de largura.
+    - **Denominadores (/2, /4, /8, /16)**: Organizados em caixas proporcionais de 38px de altura com cantos arredondados e contraste luminoso no item selecionado.
+    - **Subdivisões de Tempo**: Cartões visuais ampliados para altura generosa com espaçamento harmônico, eliminando qualquer aperto ou corte de texto/ícone.
+  - **3. Fita de Pulsos (BeatStripSelector)**:
+    - Substituído `Wrap` por `SingleChildScrollView(scrollDirection: Axis.horizontal)`, mantendo a sequência de tempos (1 a N) sempre linear e sem quebras de linha desalinhadas para 5/4, 6/4 ou mais tempos.
+    - Destaque visual permanente para o **Tempo 1**: borda âmbar sutil, tipografia dourada e indicador "Forte", garantindo que a referência do compasso nunca se perca de vista.
+  - **4. Portão de Qualidade & Testes**:
+    - `analyze_files`: **0 erros e 0 warnings**.
+    - `run_tests`: **133/133 testes aprovados** (100% GREEN), incluindo novo teste unitário `TC-03.12` validando sincronização do tempo forte ao alterar fórmulas de compasso durante a execução.
+- **Status**: Concluído e pronto para compilação do APK Release.

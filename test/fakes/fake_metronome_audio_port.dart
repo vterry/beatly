@@ -40,6 +40,7 @@ class FakeMetronomeAudioPort implements MetronomeAudioPort {
   Future<void> updatePattern(
     List<BeatEmphasis> pattern, {
     int subdivision = 1,
+    bool resetCycle = false,
   }) async {
     activePattern = List<BeatEmphasis>.unmodifiable(pattern);
     activeSubdivision = subdivision;

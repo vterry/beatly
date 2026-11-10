@@ -374,13 +374,19 @@ class BeatlyAudioEngine {
 
     /**
      * Atualiza o padrão e a subdivisão em tempo real.
+     * Se [resetCycle] for true ou se o tamanho do compasso mudar, reinicia o ciclo
+     * para que o próximo clique seja o tempo forte (tempo 1).
      */
-    fun updatePattern(pattern: List<String>, subdivision: Int) {
+    fun updatePattern(pattern: List<String>, subdivision: Int, resetCycle: Boolean = false) {
         synchronized(lock) {
+            val sizeChanged = pattern.isNotEmpty() && pattern.size != activePattern.size
             if (pattern.isNotEmpty()) {
                 activePattern = pattern
             }
             currentSubdivision = subdivision.coerceIn(1, 4)
+            if (resetCycle || sizeChanged) {
+                resetRequested = true
+            }
             lock.notifyAll()
         }
     }

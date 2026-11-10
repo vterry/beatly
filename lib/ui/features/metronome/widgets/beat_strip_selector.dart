@@ -28,20 +28,30 @@ class BeatStripSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ObsidianCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Pulsos e volume',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+              const Row(
+                children: [
+                  Icon(
+                    Icons.graphic_eq_rounded,
+                    size: 16,
+                    color: AppColors.violetLight,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Pulsos e volume',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
               Row(
                 children: [
@@ -60,116 +70,132 @@ class BeatStripSelector extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Center(
-            child: Wrap(
-              alignment: WrapAlignment.center,
-              runAlignment: WrapAlignment.center,
-              spacing: 6,
-              runSpacing: 6,
+          const SizedBox(height: 10),
+          // Fita linear horizontal de pulsos (não quebra em linhas confusas)
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: List<Widget>.generate(beatPattern.length, (index) {
-              final emphasis = beatPattern[index];
-              final isActive = index == activeBeatIndex;
-              final (barHeight, barColor) = switch (emphasis) {
-                BeatEmphasis.forte => (36.0, AppColors.amber),
-                BeatEmphasis.normal => (24.0, AppColors.violet),
-                BeatEmphasis.fraco => (
-                  14.0,
-                  AppColors.violetLight.withValues(alpha: 0.45),
-                ),
-                BeatEmphasis.mudo => (4.0, AppColors.border),
-              };
+                final emphasis = beatPattern[index];
+                final isActive = index == activeBeatIndex;
+                final isStrongBeat = index == 0;
+                final (barHeight, barColor) = switch (emphasis) {
+                  BeatEmphasis.forte => (36.0, AppColors.amber),
+                  BeatEmphasis.normal => (24.0, AppColors.violet),
+                  BeatEmphasis.fraco => (
+                    14.0,
+                    AppColors.violetLight.withValues(alpha: 0.45),
+                  ),
+                  BeatEmphasis.mudo => (4.0, AppColors.border),
+                };
 
-              return InkWell(
-                key: ValueKey('beat_emphasis_item_$index'),
-                borderRadius: BorderRadius.circular(10),
-                onTap: () => onBeatTapped(index),
-                child: Container(
-                  width: 52,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 6,
-                    horizontal: 6,
+                return Padding(
+                  padding: EdgeInsets.only(
+                    left: index == 0 ? 0 : 3,
+                    right: index == beatPattern.length - 1 ? 0 : 3,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.background,
+                  child: InkWell(
+                    key: ValueKey('beat_emphasis_item_$index'),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isActive ? AppColors.violetLight : AppColors.border,
-                      width: isActive ? 1.8 : 1.0,
-                    ),
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      PulseLedIndicator(
-                        emphasis: emphasis,
-                        isActive: isActive,
+                    onTap: () => onBeatTapped(index),
+                    child: Container(
+                      width: 48,
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 6,
+                        horizontal: 4,
                       ),
-                      const SizedBox(height: 4),
-                      SizedBox(
-                        height: 38,
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Container(
-                            width: 24,
-                            height: barHeight,
-                            decoration: BoxDecoration(
-                              color: barColor,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                          ),
+                      decoration: BoxDecoration(
+                        color: isStrongBeat && !isActive
+                            ? AppColors.amber.withValues(alpha: 0.05)
+                            : AppColors.background,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isActive
+                              ? AppColors.violetLight
+                              : (isStrongBeat
+                                  ? AppColors.amber.withValues(alpha: 0.5)
+                                  : AppColors.border),
+                          width: isActive ? 2.0 : (isStrongBeat ? 1.5 : 1.0),
                         ),
                       ),
-                      if (subdivision > 1) ...[
-                        const SizedBox(height: 3),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List<Widget>.generate(
-                            subdivision - 1,
-                            (_) => Container(
-                              width: 4,
-                              height: 4,
-                              margin: const EdgeInsets.symmetric(horizontal: 1),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: emphasis == BeatEmphasis.mudo
-                                    ? AppColors.border
-                                    : AppColors.violetLight,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          PulseLedIndicator(
+                            emphasis: emphasis,
+                            isActive: isActive,
+                          ),
+                          const SizedBox(height: 4),
+                          SizedBox(
+                            height: 38,
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: Container(
+                                width: 22,
+                                height: barHeight,
+                                decoration: BoxDecoration(
+                                  color: barColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                      const SizedBox(height: 3),
-                      Text(
-                        '${index + 1}',
-                        style: TextStyle(
-                          fontFamily: AppTypography.monoFontFamily,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: index == 0
-                              ? AppColors.amber
-                              : AppColors.textSecondary,
-                        ),
+                          if (subdivision > 1) ...[
+                            const SizedBox(height: 3),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List<Widget>.generate(
+                                subdivision - 1,
+                                (_) => Container(
+                                  width: 4,
+                                  height: 4,
+                                  margin:
+                                      const EdgeInsets.symmetric(horizontal: 1),
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: emphasis == BeatEmphasis.mudo
+                                        ? AppColors.border
+                                        : AppColors.violetLight,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 3),
+                          Text(
+                            '${index + 1}',
+                            style: TextStyle(
+                              fontFamily: AppTypography.monoFontFamily,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: isStrongBeat
+                                  ? AppColors.amber
+                                  : AppColors.textSecondary,
+                            ),
+                          ),
+                          Text(
+                            emphasis.label,
+                            style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w600,
+                              color: isStrongBeat
+                                  ? AppColors.amber.withValues(alpha: 0.8)
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        emphasis.label,
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            }),
+                );
+              }),
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-      ],
-    ),
-  );
+          const SizedBox(height: 4),
+        ],
+      ),
+    );
   }
 }
 
@@ -201,11 +227,11 @@ class _QuickPresetChip extends StatelessWidget {
           label,
           style: const TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: AppColors.violetLight,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
     );
   }
 }
-

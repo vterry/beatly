@@ -35,106 +35,146 @@ class TimeDivisionPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ObsidianCard(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Divisão do tempo',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
+              const Row(
+                children: [
+                  Icon(
+                    Icons.tune_rounded,
+                    size: 16,
+                    color: AppColors.violetLight,
+                  ),
+                  SizedBox(width: 6),
+                  Text(
+                    'Divisão do tempo',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.violet.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(6),
+                  color: AppColors.violet.withValues(alpha: 0.22),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.violetLight.withValues(alpha: 0.3),
+                  ),
                 ),
                 child: Text(
                   '$beatsPerBar/$beatUnit • ${subdivision}x',
                   key: const ValueKey('time_division_badge'),
                   style: const TextStyle(
                     fontFamily: AppTypography.monoFontFamily,
-                    fontSize: 11,
+                    fontSize: 12,
                     color: AppColors.violetLight,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          // Compasso: Numerador (1-16) e Denominador (2/4/8/16)
+          const SizedBox(height: 10),
+          // Seção 1: Compasso (Numerador [−/+] e Denominador [2, 4, 8, 16])
           Row(
             children: [
-              _SmallStepBtn(
-                buttonKey: const ValueKey('beats_per_bar_minus'),
-                label: '−',
-                onTap: () => onBeatsPerBarChanged(beatsPerBar - 1),
-              ),
-              SizedBox(
-                width: 32,
-                child: Text(
-                  '$beatsPerBar',
-                  key: const ValueKey('beats_per_bar_text'),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontFamily: AppTypography.monoFontFamily,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+              // Controles do Numerador (Tempos por Compasso)
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _StepBtn(
+                    buttonKey: const ValueKey('beats_per_bar_minus'),
+                    icon: Icons.remove_rounded,
+                    tooltip: 'Diminuir compasso',
+                    onTap: () => onBeatsPerBarChanged(beatsPerBar - 1),
                   ),
-                ),
-              ),
-              _SmallStepBtn(
-                buttonKey: const ValueKey('beats_per_bar_plus'),
-                label: '+',
-                onTap: () => onBeatsPerBarChanged(beatsPerBar + 1),
+                  Container(
+                    width: 44,
+                    height: 38,
+                    alignment: Alignment.center,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    decoration: BoxDecoration(
+                      color: AppColors.elevated,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Text(
+                      '$beatsPerBar',
+                      key: const ValueKey('beats_per_bar_text'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: AppTypography.monoFontFamily,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  _StepBtn(
+                    buttonKey: const ValueKey('beats_per_bar_plus'),
+                    icon: Icons.add_rounded,
+                    tooltip: 'Aumentar compasso',
+                    onTap: () => onBeatsPerBarChanged(beatsPerBar + 1),
+                  ),
+                ],
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8),
-                child: Text('/', style: TextStyle(color: AppColors.textMuted)),
+                child: Text(
+                  '/',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w300,
+                    color: AppColors.textMuted,
+                  ),
+                ),
               ),
+              // Denominadores
               Expanded(
-                child: Wrap(
-                  spacing: 4,
+                child: Row(
                   children: _denominators.map((den) {
                     final selected = den == beatUnit;
-                    return InkWell(
-                      key: ValueKey('beat_unit_$den'),
-                      borderRadius: BorderRadius.circular(6),
-                      onTap: () => onBeatUnitChanged(den),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: selected
-                              ? AppColors.violet
-                              : AppColors.background,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(
-                            color: selected
-                                ? AppColors.violet
-                                : AppColors.border,
-                          ),
-                        ),
-                        child: Text(
-                          '$den',
-                          style: TextStyle(
-                            fontFamily: AppTypography.monoFontFamily,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: selected
-                                ? Colors.white
-                                : AppColors.textSecondary,
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                        child: InkWell(
+                          key: ValueKey('beat_unit_$den'),
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () => onBeatUnitChanged(den),
+                          child: Container(
+                            height: 38,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? AppColors.violet
+                                  : AppColors.elevated,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: selected
+                                    ? AppColors.violetLight
+                                    : AppColors.border,
+                                width: selected ? 1.6 : 1.0,
+                              ),
+                            ),
+                            child: Text(
+                              '$den',
+                              style: TextStyle(
+                                fontFamily: AppTypography.monoFontFamily,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: selected
+                                    ? Colors.white
+                                    : AppColors.textSecondary,
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -144,47 +184,51 @@ class TimeDivisionPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          // Subdivisão de cada tempo (4 cartões visuais)
+          const SizedBox(height: 12),
+          // Seção 2: Subdivisões de tempo
           Row(
             children: _subdivisions.map((item) {
               final (value, icon, label) = item;
               final selected = value == subdivision;
               return Expanded(
                 child: Padding(
-                  padding: EdgeInsets.only(right: value < 4 ? 6 : 0),
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
                   child: InkWell(
                     key: ValueKey('subdivision_card_$value'),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     onTap: () => onSubdivisionChanged(value),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.violet.withValues(alpha: 0.22)
+                            ? AppColors.violet.withValues(alpha: 0.24)
                             : AppColors.background,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: selected ? AppColors.violet : AppColors.border,
+                          color: selected ? AppColors.violetLight : AppColors.border,
+                          width: selected ? 1.6 : 1.0,
                         ),
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
                             icon,
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: selected
-                                  ? Colors.white
-                                  : AppColors.textSecondary,
+                                  ? AppColors.violetLight
+                                  : AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             label,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 10.5,
+                              fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                               color: selected
                                   ? Colors.white
                                   : AppColors.textSecondary,
@@ -204,37 +248,39 @@ class TimeDivisionPanel extends StatelessWidget {
   }
 }
 
-class _SmallStepBtn extends StatelessWidget {
-  const _SmallStepBtn({
+class _StepBtn extends StatelessWidget {
+  const _StepBtn({
     required this.buttonKey,
-    required this.label,
+    required this.icon,
+    required this.tooltip,
     required this.onTap,
   });
 
   final Key buttonKey;
-  final String label;
+  final IconData icon;
+  final String tooltip;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      key: buttonKey,
-      borderRadius: BorderRadius.circular(8),
-      onTap: onTap,
-      child: Container(
-        width: 28,
-        height: 28,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.elevated,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w700,
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        key: buttonKey,
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Container(
+          width: 38,
+          height: 38,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.elevated,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
             color: AppColors.textPrimary,
           ),
         ),
@@ -242,4 +288,3 @@ class _SmallStepBtn extends StatelessWidget {
     );
   }
 }
-

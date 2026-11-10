@@ -104,7 +104,8 @@ class MainActivity : FlutterActivity() {
             "updatePattern" -> {
                 val pattern = call.argument<List<String>>("pattern") ?: emptyList()
                 val subdivision = call.argument<Int>("subdivision") ?: 1
-                engine.updatePattern(pattern, subdivision)
+                val resetCycle = call.argument<Boolean>("resetCycle") ?: false
+                engine.updatePattern(pattern, subdivision, resetCycle)
                 result.success(null)
             }
 
