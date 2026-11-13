@@ -18,6 +18,24 @@ enum ChallengeCompletionBehavior {
   stopAndChime,
 }
 
+/// Divisão de tempo aplicada durante o Modo Desafio.
+enum ChallengeTimeDivision {
+  /// Pulso padrão (1x / Semínima).
+  pulso,
+
+  /// Mínimas (metade dos pulsos do compasso).
+  minima,
+
+  /// Colcheias (2x por pulso).
+  colcheia,
+
+  /// Tercinas (3x por pulso).
+  tercina,
+
+  /// Semicolcheias (4x por pulso).
+  semicolcheia,
+}
+
 /// Modelo imutável de configuração do Modo Desafio / Speed Trainer (RF-04).
 @immutable
 class SpeedChallengeConfig {
@@ -29,6 +47,7 @@ class SpeedChallengeConfig {
     this.everyBars = 4,
     this.everySeconds = 30,
     this.onTargetReached = ChallengeCompletionBehavior.keepRunning,
+    this.timeDivision = ChallengeTimeDivision.pulso,
   });
 
   final int startBpm;
@@ -38,6 +57,7 @@ class SpeedChallengeConfig {
   final int everyBars;
   final int everySeconds;
   final ChallengeCompletionBehavior onTargetReached;
+  final ChallengeTimeDivision timeDivision;
 
   SpeedChallengeConfig copyWith({
     int? startBpm,
@@ -47,6 +67,7 @@ class SpeedChallengeConfig {
     int? everyBars,
     int? everySeconds,
     ChallengeCompletionBehavior? onTargetReached,
+    ChallengeTimeDivision? timeDivision,
   }) {
     return SpeedChallengeConfig(
       startBpm: startBpm ?? this.startBpm,
@@ -56,6 +77,7 @@ class SpeedChallengeConfig {
       everyBars: everyBars ?? this.everyBars,
       everySeconds: everySeconds ?? this.everySeconds,
       onTargetReached: onTargetReached ?? this.onTargetReached,
+      timeDivision: timeDivision ?? this.timeDivision,
     );
   }
 
@@ -69,7 +91,8 @@ class SpeedChallengeConfig {
         other.triggerMode == triggerMode &&
         other.everyBars == everyBars &&
         other.everySeconds == everySeconds &&
-        other.onTargetReached == onTargetReached;
+        other.onTargetReached == onTargetReached &&
+        other.timeDivision == timeDivision;
   }
 
   @override
@@ -81,6 +104,7 @@ class SpeedChallengeConfig {
         everyBars,
         everySeconds,
         onTargetReached,
+        timeDivision,
       );
 }
 

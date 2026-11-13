@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../domain/models/beat_emphasis.dart';
 import '../../../../domain/models/speed_challenge_config.dart';
 import '../../../../domain/state_machines/speed_challenge_coordinator.dart';
 import '../../../../domain/use_cases/validate_speed_challenge_use_case.dart';
@@ -27,7 +28,9 @@ class SpeedChallengeViewModel extends ChangeNotifier {
   bool get isRunning => _coordinator.isRunning;
   bool get isCompleted => _coordinator.isCompleted;
   int get currentBpm =>
-      _coordinator.isRunning ? _coordinator.currentBpm : _config.startBpm;
+      (_coordinator.isRunning || _coordinator.isCompleted)
+          ? _coordinator.currentBpm
+          : _config.startBpm;
   int get completedBarsInStep => _coordinator.completedBarsInStep;
   int get elapsedSecondsInStep => _coordinator.elapsedSecondsInStep;
 
@@ -92,12 +95,43 @@ class SpeedChallengeViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setTimeDivision(ChallengeTimeDivision division) {
+    final next = _config.timeDivision == division
+        ? ChallengeTimeDivision.pulso
+        : division;
+    _config = _config.copyWith(timeDivision: next);
+    notifyListeners();
+  }
+
   Future<bool> startChallenge({int beatsPerBar = 4}) async {
     if (!isValid) {
       notifyListeners();
       return false;
     }
-    await _coordinator.startChallenge(_config, beatsPerBar: beatsPerBar);
+
+    final (int subdivision, List<BeatEmphasis>? pattern) =
+        switch (_config.timeDivision) {
+      ChallengeTimeDivision.pulso => (1, null),
+      ChallengeTimeDivision.minima => (
+          1,
+          List<BeatEmphasis>.generate(
+            beatsPerBar,
+            (i) => i == 0
+                ? BeatEmphasis.forte
+                : (i.isEven ? BeatEmphasis.normal : BeatEmphasis.mudo),
+          ),
+        ),
+      ChallengeTimeDivision.colcheia => (2, null),
+      ChallengeTimeDivision.tercina => (3, null),
+      ChallengeTimeDivision.semicolcheia => (4, null),
+    };
+
+    await _coordinator.startChallenge(
+      _config,
+      beatsPerBar: beatsPerBar,
+      pattern: pattern,
+      subdivision: subdivision,
+    );
     notifyListeners();
     return true;
   }

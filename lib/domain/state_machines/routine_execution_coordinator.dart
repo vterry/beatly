@@ -159,10 +159,12 @@ class RoutineExecutionCoordinator {
         if (_currentActivityIndex + 1 < _routine!.activities.length) {
           unawaited(_audioPort.stop());
           if (_transitionChime != 'mute') {
-            unawaited(_audioPort.playTransitionChime(
-              soundName: _transitionChime,
-              volume: _transitionVolume,
-            ));
+            unawaited(
+              _audioPort.playTransitionChime(
+                soundName: _transitionChime,
+                volume: _transitionVolume,
+              ),
+            );
           }
           if (_transitionSeconds > 0) {
             _emitState(
@@ -508,6 +510,14 @@ class RoutineExecutionCoordinator {
     );
 
     unawaited(_audioPort.stop());
+    if (!isCompletedEarly && _transitionChime != 'mute') {
+      unawaited(
+        _audioPort.playTransitionChime(
+          soundName: _transitionChime,
+          volume: _transitionVolume,
+        ),
+      );
+    }
     await _sessionRepository.saveSession(session);
   }
 

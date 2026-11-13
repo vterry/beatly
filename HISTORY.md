@@ -313,3 +313,20 @@ Este documento registra a evolução incremental de cada etapa do projeto **Beat
     - `analyze_files`: **0 erros e 0 warnings**.
     - `run_tests`: **133/133 testes aprovados** (100% GREEN), incluindo novo teste unitário `TC-03.12` validando sincronização do tempo forte ao alterar fórmulas de compasso durante a execução.
 - **Status**: Concluído e pronto para compilação do APK Release.
+
+### Iteração 17 — Velocidade Atingida e Divisão no Desafio, Centralização de Beats e Canal de Chime Independente
+- **Data/Hora**: 2026-11-12
+- **Etapa**: Correções de UX e Bug de Áudio em Rotinas
+- **Ações Realizadas**:
+  - **1. Modo Desafio (Velocidade Atingida & Divisão de Tempo)**:
+    - Corrigido getter `currentBpm` em `SpeedChallengeViewModel` para retornar `_coordinator.currentBpm` também quando `_coordinator.isCompleted == true`, exibindo a velocidade final atingida no banner e no painel ao concluir o desafio.
+    - Adicionado `ChallengeTimeDivision` (`pulso`, `minima`, `colcheia`, `tercina`, `semicolcheia`) em `SpeedChallengeConfig` com seletor simples no `SpeedChallengeBottomSheet` ("Mínimas", "Colcheias", "Tercinas", "Semicol.").
+  - **2. Metrônomo (Centralização dos Beats)**:
+    - Envolvido o `SingleChildScrollView` horizontal de `BeatStripSelector` em `Center(...)` com `Row(mainAxisSize: MainAxisSize.min)`, centralizando perfeitamente os pulsos na tela principal sem perder o scroll horizontal para compassos extensos.
+  - **3. Rotinas (Som de Conclusão Garantido Mesmo com Volume de Mídia Baixo)**:
+    - Refatorado `playChime` em `BeatlyAudioEngine.kt` para tocar em um `AudioTrack` estático (`MODE_STATIC`) dedicado com `AudioAttributes.USAGE_ALARM` e `CONTENT_TYPE_SONIFICATION`, tornando o aviso sonoro imune a `stop()`/`flush()` do metrônomo e audível mesmo se o volume de mídia do celular estiver baixo.
+    - Atualizado `RoutineExecutionCoordinator._completeRoutine` para disparar o chime também na conclusão automática da última atividade da rotina.
+  - **4. Portão de Qualidade & Testes**:
+    - `analyze_files`: **0 erros e 0 warnings**.
+    - `run_tests`: **135/135 testes aprovados** (100% GREEN).
+- **Status**: Concluído e pronto para compilação do APK Release.

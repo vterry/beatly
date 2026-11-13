@@ -187,6 +187,83 @@ class _SpeedChallengeBottomSheetState extends State<SpeedChallengeBottomSheet> {
                   ),
                   const SizedBox(height: AppDimensions.sm),
 
+                  // Divisão do tempo opcional (Mínimas, Colcheias, Tercinas, Semicolcheias)
+                  ObsidianCard(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.music_note_rounded,
+                              size: 16,
+                              color: AppColors.violetLight,
+                            ),
+                            SizedBox(width: AppDimensions.xs),
+                            Text(
+                              'Divisão do Tempo (Opcional):',
+                              style: AppTypography.caption,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: AppDimensions.sm),
+                        Row(
+                          children: [
+                            (ChallengeTimeDivision.minima, 'Mínimas'),
+                            (ChallengeTimeDivision.colcheia, 'Colcheias'),
+                            (ChallengeTimeDivision.tercina, 'Tercinas'),
+                            (ChallengeTimeDivision.semicolcheia, 'Semicol.'),
+                          ].map((item) {
+                            final (div, label) = item;
+                            final isSelected = vm.config.timeDivision == div;
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 2.5),
+                                child: InkWell(
+                                  key: ValueKey('challenge_division_${div.name}'),
+                                  borderRadius: BorderRadius.circular(8),
+                                  onTap: vm.isRunning
+                                      ? null
+                                      : () => vm.setTimeDivision(div),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: isSelected
+                                          ? AppColors.violet.withValues(alpha: 0.24)
+                                          : AppColors.background,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: isSelected
+                                            ? AppColors.violetLight
+                                            : AppColors.border,
+                                        width: isSelected ? 1.5 : 1.0,
+                                      ),
+                                    ),
+                                    child: Text(
+                                      label,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: isSelected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: isSelected
+                                            ? Colors.white
+                                            : AppColors.textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: AppDimensions.sm),
+
                   // Comportamento no teto
                   ObsidianCard(
                     padding: const EdgeInsets.all(12),

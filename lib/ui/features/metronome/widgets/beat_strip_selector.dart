@@ -71,12 +71,14 @@ class BeatStripSelector extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          // Fita linear horizontal de pulsos (não quebra em linhas confusas)
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List<Widget>.generate(beatPattern.length, (index) {
+          // Fita linear horizontal de pulsos centralizada (não quebra em linhas confusas)
+          Center(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: List<Widget>.generate(beatPattern.length, (index) {
                 final emphasis = beatPattern[index];
                 final isActive = index == activeBeatIndex;
                 final isStrongBeat = index == 0;
@@ -191,6 +193,7 @@ class BeatStripSelector extends StatelessWidget {
                 );
               }),
             ),
+          ),
           ),
           const SizedBox(height: 4),
         ],

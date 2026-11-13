@@ -410,17 +410,60 @@ class BeatlyAudioEngine {
 
     /**
      * Dispara um chime sonoro (ex: 'chime_zen', 'chime_marimba', 'chime_gong') com volume customizado.
-     * Funciona tanto com o metrônomo tocando quanto parado.
+     * Utiliza um canal dedicado com USAGE_ALARM para garantir que o aviso toque sempre,
+     * mesmo que o metrônomo seja parado em seguida ou o volume de mídia esteja baixo.
      */
     fun playChime(soundName: String, volume: Double) {
         val sample = samples[soundName]
             ?: samples["chime_zen"]
             ?: return
 
-        val vol = volume.coerceIn(0.0, 1.0).toFloat()
-        synchronized(lock) {
-            pendingChimes.add(PendingChime(sample, vol))
-            lock.notifyAll()
+        // Garante volume mínimo audível para avisos de conclusão/transição
+        val vol = volume.coerceIn(0.25, 1.0).toFloat()
+
+        Thread({
+            var chimeTrack: AudioTrack? = null
+            try {
+                val scaledBuffer = ShortArray(sample.size) { i ->
+                    (sample[i] * vol).toInt().coerceIn(-32768, 32767).toShort()
+                }
+                val bufferSizeInBytes = scaledBuffer.size * 2
+
+                val chimeAttributes = AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_ALARM)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .build()
+
+                val chimeFormat = AudioFormat.Builder()
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setSampleRate(SAMPLE_RATE)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                    .build()
+
+                chimeTrack = AudioTrack.Builder()
+                    .setAudioAttributes(chimeAttributes)
+                    .setAudioFormat(chimeFormat)
+                    .setBufferSizeInBytes(bufferSizeInBytes)
+                    .setTransferMode(AudioTrack.MODE_STATIC)
+                    .build()
+
+                chimeTrack.write(scaledBuffer, 0, scaledBuffer.size)
+                chimeTrack.play()
+
+                val durationMs = ((sample.size.toDouble() / SAMPLE_RATE) * 1000.0).toLong() + 120L
+                Thread.sleep(durationMs)
+            } catch (_: Exception) {
+                // Ignora falhas transitórias de áudio sem derrubar a thread
+            } finally {
+                try {
+                    chimeTrack?.stop()
+                    chimeTrack?.release()
+                } catch (_: Exception) {
+                }
+            }
+        }, "BeatlyChimeThread").apply {
+            isDaemon = true
+            start()
         }
     }
 
