@@ -1,6 +1,7 @@
 package com.souza.beatly
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
@@ -16,29 +17,35 @@ import io.flutter.plugin.common.MethodChannel
  *
  * Integra o motor nativo [BeatlyAudioEngine] com o Flutter via [MethodChannel]
  * ('com.beatly.app/audio') garantindo controle de [AudioManager] AudioFocus e
- * controle de tela sempre ativa ('com.beatly.app/wakelock').
+ * controle de tela sempre ativa ('com.beatly.app/wakelock') e execução contínua
+ * em primeiro plano ('com.beatly.app/foreground_service').
  */
 class MainActivity : FlutterActivity() {
 
     companion object {
         private const val AUDIO_CHANNEL = "com.beatly.app/audio"
         private const val WAKELOCK_CHANNEL = "com.beatly.app/wakelock"
+        private const val FOREGROUND_CHANNEL = "com.beatly.app/foreground_service"
     }
 
     private var audioEngine: BeatlyAudioEngine? = null
     private var audioChannel: MethodChannel? = null
     private var wakelockChannel: MethodChannel? = null
+    private var foregroundChannel: MethodChannel? = null
 
     private var audioManager: AudioManager? = null
     private var audioFocusRequest: AudioFocusRequest? = null
+    private var allowBackgroundAudio: Boolean = true
 
     private val audioFocusListener = AudioManager.OnAudioFocusChangeListener { focusChange ->
         when (focusChange) {
             AudioManager.AUDIOFOCUS_LOSS,
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                audioEngine?.stop()
-                runOnUiThread {
-                    audioChannel?.invokeMethod("onAudioFocusLost", null)
+                if (!allowBackgroundAudio) {
+                    audioEngine?.stop()
+                    runOnUiThread {
+                        audioChannel?.invokeMethod("onAudioFocusLost", null)
+                    }
                 }
             }
             AudioManager.AUDIOFOCUS_GAIN -> {
@@ -68,6 +75,13 @@ class MainActivity : FlutterActivity() {
                 handleWakelockMethodCall(call, result)
             }
         }
+
+        // Canal de Foreground Service Nativo
+        foregroundChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, FOREGROUND_CHANNEL).apply {
+            setMethodCallHandler { call, result ->
+                handleForegroundMethodCall(call, result)
+            }
+        }
     }
 
     private fun handleAudioMethodCall(call: MethodCall, result: MethodChannel.Result) {
@@ -81,13 +95,21 @@ class MainActivity : FlutterActivity() {
                 result.success(null)
             }
 
+            "setAllowBackgroundAudio" -> {
+                val allow = call.argument<Boolean>("allow") ?: true
+                allowBackgroundAudio = allow
+                result.success(null)
+            }
+
             "start" -> {
                 val bpm = call.argument<Int>("bpm") ?: 120
                 val pattern = call.argument<List<String>>("pattern") ?: listOf("forte", "normal", "fraco", "mudo")
                 val subdivision = call.argument<Int>("subdivision") ?: 1
+                val allowBg = call.argument<Boolean>("allowBackground") ?: allowBackgroundAudio
+                allowBackgroundAudio = allowBg
 
                 val focusGranted = requestAudioFocus()
-                if (focusGranted) {
+                if (focusGranted || allowBackgroundAudio) {
                     engine.start(bpm, pattern, subdivision)
                     result.success(null)
                 } else {
@@ -152,8 +174,46 @@ class MainActivity : FlutterActivity() {
         }
     }
 
+    private fun handleForegroundMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        when (call.method) {
+            "startForeground" -> {
+                val title = call.argument<String>("title") ?: "Beatly em Execução"
+                val subtitle = call.argument<String>("subtitle") ?: "Treino ativo em segundo plano"
+                val intent = Intent(this, BeatlyForegroundService::class.java).apply {
+                    action = BeatlyForegroundService.ACTION_START
+                    putExtra(BeatlyForegroundService.EXTRA_TITLE, title)
+                    putExtra(BeatlyForegroundService.EXTRA_SUBTITLE, subtitle)
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(intent)
+                } else {
+                    startService(intent)
+                }
+                result.success(null)
+            }
+
+            "stopForeground" -> {
+                val intent = Intent(this, BeatlyForegroundService::class.java).apply {
+                    action = BeatlyForegroundService.ACTION_STOP
+                }
+                startService(intent)
+                result.success(null)
+            }
+
+            else -> {
+                result.notImplemented()
+            }
+        }
+    }
+
     private fun requestAudioFocus(): Boolean {
         val am = audioManager ?: return false
+
+        val focusGain = if (allowBackgroundAudio) {
+            AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+        } else {
+            AudioManager.AUDIOFOCUS_GAIN
+        }
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val playbackAttributes = AudioAttributes.Builder()
@@ -161,21 +221,23 @@ class MainActivity : FlutterActivity() {
                 .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                 .build()
 
-            val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            val focusRequest = AudioFocusRequest.Builder(focusGain)
                 .setAudioAttributes(playbackAttributes)
                 .setAcceptsDelayedFocusGain(false)
                 .setOnAudioFocusChangeListener(audioFocusListener)
                 .build()
 
             audioFocusRequest = focusRequest
-            am.requestAudioFocus(focusRequest) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+            val res = am.requestAudioFocus(focusRequest)
+            res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED || allowBackgroundAudio
         } else {
             @Suppress("DEPRECATION")
-            am.requestAudioFocus(
+            val res = am.requestAudioFocus(
                 audioFocusListener,
                 AudioManager.STREAM_MUSIC,
-                AudioManager.AUDIOFOCUS_GAIN
-            ) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
+                focusGain
+            )
+            res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED || allowBackgroundAudio
         }
     }
 
@@ -193,6 +255,12 @@ class MainActivity : FlutterActivity() {
 
     override fun onDestroy() {
         abandonAudioFocus()
+        val intent = Intent(this, BeatlyForegroundService::class.java).apply {
+            action = BeatlyForegroundService.ACTION_STOP
+        }
+        try {
+            startService(intent)
+        } catch (_: Exception) {}
         audioEngine?.release()
         audioEngine = null
         super.onDestroy()

@@ -330,3 +330,24 @@ Este documento registra a evolução incremental de cada etapa do projeto **Beat
     - `analyze_files`: **0 erros e 0 warnings**.
     - `run_tests`: **135/135 testes aprovados** (100% GREEN).
 - **Status**: Concluído e pronto para compilação do APK Release.
+
+### Iteração 18 — Persistência do Último BPM e Execução de Rotinas em Segundo Plano com Apps Musicais
+- **Data/Hora**: 2026-11-21
+- **Etapa**: Persistência de Estado e Foreground Service com Mixagem de Áudio Concorrente
+- **Ações Realizadas**:
+  - **1. Metrônomo Principal (Persistência da Última Velocidade Configurada)**:
+    - Adicionado campo `lastMetronomeBpm: int` (padrão 120, intervalo 20..300) ao modelo `AppSettings` e mapeado na tabela SQLite do Drift via `SettingsMapper`.
+    - Adicionados métodos `getLastMetronomeBpm()` e `saveLastMetronomeBpm(int bpm)` em `SettingsRepository`, com implementação no `DriftSettingsRepository` e `FakeSettingsRepository`.
+    - `MetronomeViewModel` atualizado para receber `SettingsRepository`: implementado `loadSavedBpm()` ao inicializar o app e salvamento automático do novo BPM ao disparar `setBpm()`, `incrementBpm()` ou `decrementBpm()`.
+  - **2. Rotinas em Segundo Plano & Concorrência com Outros Apps Musicais (Moises, Ultimate Guitar)**:
+    - Adicionado campo `executeRoutinesInBackground: bool` (padrão `true`) ao `AppSettings` com switch Obsidian Dark nas Configurações ("Segundo Plano & Outros Apps").
+    - Criado serviço nativo em primeiro plano `BeatlyForegroundService.kt` com notificação persistente (`FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK`) exibindo o título da rotina e a atividade atual, garantindo que o Android não congele o processo quando a tela for bloqueada ou outro app for aberto.
+    - Adicionada permissão `android.permission.POST_NOTIFICATIONS` e registro do serviço no `AndroidManifest.xml`.
+    - Criada ponte de comunicação Dart `AndroidForegroundService` e integrada diretamente ao ciclo de vida da `RoutineExecutionScreen` (inicia no setup, atualiza em cada atividade e encerra no descarte/conclusão).
+    - Ajustado o gerenciamento de `AudioFocus` na `MainActivity.kt`: configurado para requerer `AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK` quando `allowBackgroundAudio == true` e evitar encerramento forçado do motor ao receber perda transitória de foco. Com isso, o mixer de hardware do Android reproduz simultaneamente o som do Beatly e backing tracks / faixas de playback de apps terceiros como Moises e Ultimate Guitar.
+  - **3. Portão de Qualidade & Testes**:
+    - `analyze_files`: **0 erros e 0 warnings** em todo o projeto.
+    - `run_tests`: **138/138 testes aprovados** (100% GREEN), incluindo `TC-02.10`, `TC-08.03` e `TC-03.13`.
+  - **4. Release Build**:
+    - Gerado `app-release.apk` atualizado e transferido para o host Windows em `C:\Users\Victor\Downloads\beatly.apk`.
+- **Status**: Concluído e pronto para testes no dispositivo físico.

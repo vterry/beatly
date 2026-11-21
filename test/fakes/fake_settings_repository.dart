@@ -32,4 +32,30 @@ class FakeSettingsRepository implements SettingsRepository {
     );
     saveCount++;
   }
+
+  @override
+  Future<int> getLastMetronomeBpm() async {
+    return _settings.lastMetronomeBpm;
+  }
+
+  @override
+  Future<void> saveLastMetronomeBpm(int bpm) async {
+    _settings = _settings.copyWith(
+      lastMetronomeBpm: bpm.clamp(20, 300),
+    );
+    saveCount++;
+  }
+
+  @override
+  Future<bool> getExecuteRoutinesInBackground() async {
+    return _settings.executeRoutinesInBackground;
+  }
+
+  @override
+  Future<void> saveExecuteRoutinesInBackground(bool enabled) async {
+    _settings = _settings.copyWith(
+      executeRoutinesInBackground: enabled,
+    );
+    saveCount++;
+  }
 }

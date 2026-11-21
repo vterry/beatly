@@ -105,4 +105,19 @@ class SettingsViewModel extends ChangeNotifier {
     }
     notifyListeners();
   }
+
+  /// Define e persiste a preferência de executar rotinas/atividades em segundo plano com outros apps.
+  Future<void> setExecuteRoutinesInBackground(bool enabled) async {
+    _settings = _settings.copyWith(executeRoutinesInBackground: enabled);
+    await _repository.saveSettings(_settings);
+    notifyListeners();
+  }
+
+  /// Define e persiste a última velocidade BPM configurada no metrônomo principal.
+  Future<void> setLastMetronomeBpm(int bpm) async {
+    final clamped = bpm.clamp(20, 300);
+    _settings = _settings.copyWith(lastMetronomeBpm: clamped);
+    await _repository.saveSettings(_settings);
+    notifyListeners();
+  }
 }

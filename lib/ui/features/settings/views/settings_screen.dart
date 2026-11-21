@@ -269,6 +269,38 @@ class SettingsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+                const SizedBox(height: AppDimensions.md),
+
+                // 4. Card: Segundo Plano & Uso com Outros Aplicativos
+                ObsidianCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Segundo Plano & Outros Apps',
+                        style: AppTypography.heading,
+                      ),
+                      const SizedBox(height: AppDimensions.sm),
+                      SwitchListTile(
+                        key: const ValueKey(
+                          'settings_switch_background_execution',
+                        ),
+                        title: const Text(
+                          'Executar Treino em Segundo Plano',
+                          style: AppTypography.body,
+                        ),
+                        subtitle: const Text(
+                          'Permite que rotinas, atividades e metrônomo continuem tocando ao usar Moises, Ultimate Guitar ou com a tela apagada.',
+                          style: AppTypography.caption,
+                        ),
+                        value: settings.executeRoutinesInBackground,
+                        activeThumbColor: AppColors.violetLight,
+                        contentPadding: EdgeInsets.zero,
+                        onChanged: viewModel.setExecuteRoutinesInBackground,
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: AppDimensions.xl),
               ],
             ),

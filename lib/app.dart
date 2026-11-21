@@ -89,6 +89,7 @@ class _BeatlyAppState extends State<BeatlyApp> {
       _metronomeVm = MetronomeViewModel(
         audioPort: _audioPort,
         clockPort: _clockPort,
+        settingsRepository: widget.settingsRepository,
       );
 
       _challengeVm = SpeedChallengeViewModel(
@@ -120,7 +121,9 @@ class _BeatlyAppState extends State<BeatlyApp> {
 
       _routineListVm.loadRoutines();
       _evolutionVm.loadMonth();
-      _settingsVm.loadSettings();
+      _settingsVm.loadSettings().then((_) {
+        _metronomeVm.loadSavedBpm();
+      });
     }
   }
 
@@ -168,6 +171,7 @@ class _BeatlyAppState extends State<BeatlyApp> {
               transitionVolume: settings.transitionAlertVolume,
               keepScreenAwake: settings.keepScreenAwake,
               hapticOnTransition: settings.hapticOnTransition,
+              executeRoutinesInBackground: settings.executeRoutinesInBackground,
             ),
           ),
         );
@@ -216,6 +220,7 @@ class _BeatlyAppState extends State<BeatlyApp> {
             transitionVolume: settings.transitionAlertVolume,
             keepScreenAwake: settings.keepScreenAwake,
             hapticOnTransition: settings.hapticOnTransition,
+            executeRoutinesInBackground: settings.executeRoutinesInBackground,
           ),
         ),
       );

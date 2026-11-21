@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../../data/services/system/android_foreground_service.dart';
 import '../../../../data/services/system/wakelock_service.dart';
 import '../../../../domain/models/activity_category.dart';
 import '../../../../domain/models/beat_emphasis.dart';
@@ -30,7 +31,9 @@ class RoutineExecutionScreen extends StatefulWidget {
     this.transitionVolume = 0.8,
     this.keepScreenAwake = true,
     this.hapticOnTransition = true,
+    this.executeRoutinesInBackground = true,
     this.wakelockService,
+    this.foregroundService,
     super.key,
   });
 
@@ -42,7 +45,9 @@ class RoutineExecutionScreen extends StatefulWidget {
   final double transitionVolume;
   final bool keepScreenAwake;
   final bool hapticOnTransition;
+  final bool executeRoutinesInBackground;
   final WakelockService? wakelockService;
+  final AndroidForegroundService? foregroundService;
 
   @override
   State<RoutineExecutionScreen> createState() => _RoutineExecutionScreenState();
@@ -50,14 +55,23 @@ class RoutineExecutionScreen extends StatefulWidget {
 
 class _RoutineExecutionScreenState extends State<RoutineExecutionScreen> {
   late final WakelockService _wakelock;
+  late final AndroidForegroundService _foregroundService;
 
   @override
   void initState() {
     super.initState();
     _wakelock = widget.wakelockService ?? WakelockService();
+    _foregroundService = widget.foregroundService ?? AndroidForegroundService();
     if (widget.keepScreenAwake) {
       _wakelock.enable();
     }
+    if (widget.executeRoutinesInBackground) {
+      _foregroundService.startForegroundSession(
+        title: widget.routine.name,
+        subtitle: 'Treino ativo em segundo plano',
+      );
+    }
+    widget.viewModel.addListener(_onViewModelStateChanged);
     if (widget.viewModel.state is ExecutionStateIdle) {
       widget.viewModel.startRoutine(
         widget.routine,
@@ -69,10 +83,34 @@ class _RoutineExecutionScreenState extends State<RoutineExecutionScreen> {
     }
   }
 
+  void _onViewModelStateChanged() {
+    if (!mounted || !widget.executeRoutinesInBackground) return;
+    final state = widget.viewModel.state;
+    if (state is ExecutionStateRunning) {
+      final act = state.currentActivity;
+      final bpmInfo = act.bpm != null ? ' • ${act.bpm} BPM' : '';
+      _foregroundService.startForegroundSession(
+        title: widget.routine.name,
+        subtitle: '${act.name}$bpmInfo (${state.currentActivityIndex + 1}/${state.totalActivities})',
+      );
+    } else if (state is ExecutionStateTransitioning) {
+      _foregroundService.startForegroundSession(
+        title: widget.routine.name,
+        subtitle: 'Transição para ${state.nextActivity.name}',
+      );
+    } else if (state is ExecutionStateCompleted || state is ExecutionStateCanceled) {
+      _foregroundService.stopForegroundSession();
+    }
+  }
+
   @override
   void dispose() {
+    widget.viewModel.removeListener(_onViewModelStateChanged);
     if (widget.keepScreenAwake) {
       _wakelock.disable();
+    }
+    if (widget.viewModel.isFinished) {
+      _foregroundService.stopForegroundSession();
     }
     super.dispose();
   }

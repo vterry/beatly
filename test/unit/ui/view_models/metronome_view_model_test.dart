@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../fakes/fake_clock_port.dart';
 import '../../../fakes/fake_metronome_audio_port.dart';
+import '../../../fakes/fake_settings_repository.dart';
 
 void main() {
   group('MetronomeViewModel (RF-01 / RF-02 / RF-03)', () {
@@ -131,6 +132,31 @@ void main() {
         expect(viewModel.activeBeatIndex, equals(0));
       },
     );
+
+    test('TC-03.13: salva e carrega último BPM configurado quando settingsRepository é fornecido', () async {
+      final fakeSettingsRepo = FakeSettingsRepository();
+      await fakeSettingsRepo.saveLastMetronomeBpm(135);
+
+      final vmWithRepo = MetronomeViewModel(
+        audioPort: audioPort,
+        clockPort: clockPort,
+        settingsRepository: fakeSettingsRepo,
+      );
+
+      // Carrega BPM salvo
+      await vmWithRepo.loadSavedBpm();
+      expect(vmWithRepo.bpm, equals(135));
+
+      // Ao alterar BPM, persiste automaticamente
+      await vmWithRepo.setBpm(142);
+      expect(await fakeSettingsRepo.getLastMetronomeBpm(), equals(142));
+
+      // Ao incrementar BPM, persiste automaticamente
+      await vmWithRepo.incrementBpm(3);
+      expect(await fakeSettingsRepo.getLastMetronomeBpm(), equals(145));
+
+      vmWithRepo.dispose();
+    });
   });
 }
 

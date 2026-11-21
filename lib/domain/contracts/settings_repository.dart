@@ -6,5 +6,8 @@ abstract interface class SettingsRepository {
   Future<void> saveSettings(AppSettings settings);
   Future<int> getTransitionCountdownSeconds();
   Future<void> saveTransitionCountdownSeconds(int seconds);
+  Future<int> getLastMetronomeBpm();
+  Future<void> saveLastMetronomeBpm(int bpm);
+  Future<bool> getExecuteRoutinesInBackground();
+  Future<void> saveExecuteRoutinesInBackground(bool enabled);
 }
-

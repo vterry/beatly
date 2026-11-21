@@ -37,5 +37,32 @@ class DriftSettingsRepository implements SettingsRepository {
       current.copyWith(transitionCountdownSeconds: seconds.clamp(0, 60)),
     );
   }
-}
 
+  @override
+  Future<int> getLastMetronomeBpm() async {
+    final settings = await getSettings();
+    return settings.lastMetronomeBpm;
+  }
+
+  @override
+  Future<void> saveLastMetronomeBpm(int bpm) async {
+    final current = await getSettings();
+    await saveSettings(
+      current.copyWith(lastMetronomeBpm: bpm.clamp(20, 300)),
+    );
+  }
+
+  @override
+  Future<bool> getExecuteRoutinesInBackground() async {
+    final settings = await getSettings();
+    return settings.executeRoutinesInBackground;
+  }
+
+  @override
+  Future<void> saveExecuteRoutinesInBackground(bool enabled) async {
+    final current = await getSettings();
+    await saveSettings(
+      current.copyWith(executeRoutinesInBackground: enabled),
+    );
+  }
+}

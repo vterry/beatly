@@ -51,6 +51,31 @@ void main() {
       expect(loaded.hapticOnTransition, isFalse);
       expect(loaded.keepScreenAwake, isFalse);
     });
+
+    test('TC-02.10: salva e recupera lastMetronomeBpm e executeRoutinesInBackground', () async {
+      // Valores padrão quando não configurados
+      expect(await repository.getLastMetronomeBpm(), equals(120));
+      expect(await repository.getExecuteRoutinesInBackground(), isTrue);
+
+      // Salva novos valores diretamente
+      await repository.saveLastMetronomeBpm(160);
+      expect(await repository.getLastMetronomeBpm(), equals(160));
+
+      await repository.saveExecuteRoutinesInBackground(false);
+      expect(await repository.getExecuteRoutinesInBackground(), isFalse);
+
+      // Salva via AppSettings completo
+      final current = await repository.getSettings();
+      final updated = current.copyWith(
+        lastMetronomeBpm: 144,
+        executeRoutinesInBackground: true,
+      );
+      await repository.saveSettings(updated);
+
+      final loaded = await repository.getSettings();
+      expect(loaded.lastMetronomeBpm, equals(144));
+      expect(loaded.executeRoutinesInBackground, isTrue);
+    });
   });
 }
 

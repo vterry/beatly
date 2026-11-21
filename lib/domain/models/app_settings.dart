@@ -18,9 +18,15 @@ class AppSettings {
     this.hapticOnFirstBeat = false,
     this.hapticOnTransition = true,
     this.keepScreenAwake = true,
+    this.executeRoutinesInBackground = true,
+    this.lastMetronomeBpm = 120,
   }) : assert(
          transitionCountdownSeconds >= 0 && transitionCountdownSeconds <= 60,
          'Contador de transição deve estar entre 0 e 60 segundos',
+       ),
+       assert(
+         lastMetronomeBpm >= 20 && lastMetronomeBpm <= 300,
+         'BPM do metrônomo deve estar entre 20 e 300',
        );
 
   final int transitionCountdownSeconds;
@@ -29,6 +35,8 @@ class AppSettings {
   final bool hapticOnFirstBeat;
   final bool hapticOnTransition;
   final bool keepScreenAwake;
+  final bool executeRoutinesInBackground;
+  final int lastMetronomeBpm;
 
   AppSettings copyWith({
     int? transitionCountdownSeconds,
@@ -37,6 +45,8 @@ class AppSettings {
     bool? hapticOnFirstBeat,
     bool? hapticOnTransition,
     bool? keepScreenAwake,
+    bool? executeRoutinesInBackground,
+    int? lastMetronomeBpm,
   }) {
     return AppSettings(
       transitionCountdownSeconds:
@@ -47,7 +57,9 @@ class AppSettings {
       hapticOnFirstBeat: hapticOnFirstBeat ?? this.hapticOnFirstBeat,
       hapticOnTransition: hapticOnTransition ?? this.hapticOnTransition,
       keepScreenAwake: keepScreenAwake ?? this.keepScreenAwake,
+      executeRoutinesInBackground:
+          executeRoutinesInBackground ?? this.executeRoutinesInBackground,
+      lastMetronomeBpm: lastMetronomeBpm ?? this.lastMetronomeBpm,
     );
   }
 }
-

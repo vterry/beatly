@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../../domain/contracts/clock_port.dart';
 import '../../../../domain/contracts/metronome_audio_port.dart';
+import '../../../../domain/contracts/settings_repository.dart';
 import '../../../../domain/models/beat_emphasis.dart';
 import '../../../../domain/models/metronome_config.dart';
 import '../../../../domain/use_cases/calculate_tap_tempo_use_case.dart';
@@ -14,9 +15,16 @@ class MetronomeViewModel extends ChangeNotifier {
     required MetronomeAudioPort audioPort,
     required ClockPort clockPort,
     CalculateTapTempoUseCase? tapTempoUseCase,
+    SettingsRepository? settingsRepository,
+    int? initialBpm,
   }) : _audioPort = audioPort,
        _clockPort = clockPort,
-       _tapTempoUseCase = tapTempoUseCase ?? CalculateTapTempoUseCase();
+       _tapTempoUseCase = tapTempoUseCase ?? CalculateTapTempoUseCase(),
+       _settingsRepository = settingsRepository {
+    if (initialBpm != null) {
+      _config = _config.copyWith(bpm: initialBpm.clamp(minBpm, maxBpm));
+    }
+  }
 
   static const int minBpm = 20;
   static const int maxBpm = 300;
@@ -24,6 +32,7 @@ class MetronomeViewModel extends ChangeNotifier {
   final MetronomeAudioPort _audioPort;
   final ClockPort _clockPort;
   final CalculateTapTempoUseCase _tapTempoUseCase;
+  final SettingsRepository? _settingsRepository;
 
   MetronomeConfig _config = MetronomeConfig();
   bool _isPlaying = false;
@@ -44,6 +53,25 @@ class MetronomeViewModel extends ChangeNotifier {
   bool get canIncrementBpm => _config.bpm < maxBpm;
   bool get canDecrementBpm => _config.bpm > minBpm;
 
+  /// Carrega a última velocidade salva nas preferências do aplicativo.
+  Future<void> loadSavedBpm() async {
+    if (_settingsRepository == null) return;
+    try {
+      final savedBpm = await _settingsRepository.getLastMetronomeBpm();
+      final clamped = savedBpm.clamp(minBpm, maxBpm);
+      if (clamped != _config.bpm) {
+        _config = _config.copyWith(bpm: clamped);
+        if (_isPlaying) {
+          await _audioPort.updateBpm(clamped);
+          _restartVisualPulseTicker();
+        }
+        notifyListeners();
+      }
+    } catch (_) {
+      // Ignora falhas de leitura
+    }
+  }
+
   Future<void> setBpm(int newBpm) async {
     final clamped = newBpm.clamp(minBpm, maxBpm);
     if (clamped == _config.bpm) return;
@@ -53,6 +81,7 @@ class MetronomeViewModel extends ChangeNotifier {
       await _audioPort.updateBpm(clamped);
       _restartVisualPulseTicker();
     }
+    unawaited(_settingsRepository?.saveLastMetronomeBpm(clamped));
     notifyListeners();
   }
 

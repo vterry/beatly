@@ -34,6 +34,7 @@ class AndroidMetronomeAudioService implements MetronomeAudioPort {
 
   bool _isRunning = false;
   bool _hasAudioFocus = true;
+  bool _allowBackgroundAudio = true;
   int _bpm = 120;
   int _subdivision = 1;
   List<BeatEmphasis> _pattern = const <BeatEmphasis>[];
@@ -49,10 +50,16 @@ class AndroidMetronomeAudioService implements MetronomeAudioPort {
 
   bool get isRunning => _isRunning;
   bool get hasAudioFocus => _hasAudioFocus;
+  bool get allowBackgroundAudio => _allowBackgroundAudio;
   int get currentBpm => _bpm;
   int get currentSubdivision => _subdivision;
   List<BeatEmphasis> get currentPattern =>
       List<BeatEmphasis>.unmodifiable(_pattern);
+
+  Future<void> setAllowBackgroundAudio(bool allow) async {
+    _allowBackgroundAudio = allow;
+    await _invokeNativeSafe('setAllowBackgroundAudio', {'allow': allow});
+  }
 
   Future<dynamic> _handleNativeCall(MethodCall call) async {
     switch (call.method) {
@@ -97,6 +104,7 @@ class AndroidMetronomeAudioService implements MetronomeAudioPort {
       'bpm': _bpm,
       'pattern': _pattern.map((e) => e.name).toList(),
       'subdivision': _subdivision,
+      'allowBackground': _allowBackgroundAudio,
     });
 
     _scheduleTicks();

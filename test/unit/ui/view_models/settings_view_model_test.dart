@@ -75,5 +75,25 @@ void main() {
         expect(saved.hapticOnTransition, isFalse);
       },
     );
+
+    test(
+      'TC-08.03: Atualizar execução em background e último BPM persiste preferências',
+      () async {
+        await viewModel.loadSettings();
+
+        expect(viewModel.settings.executeRoutinesInBackground, isTrue);
+        expect(viewModel.settings.lastMetronomeBpm, equals(120));
+
+        await viewModel.setExecuteRoutinesInBackground(false);
+        expect(viewModel.settings.executeRoutinesInBackground, isFalse);
+
+        await viewModel.setLastMetronomeBpm(155);
+        expect(viewModel.settings.lastMetronomeBpm, equals(155));
+
+        final saved = await repository.getSettings();
+        expect(saved.executeRoutinesInBackground, isFalse);
+        expect(saved.lastMetronomeBpm, equals(155));
+      },
+    );
   });
 }

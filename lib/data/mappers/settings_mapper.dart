@@ -12,6 +12,8 @@ abstract final class SettingsMapper {
       'hapticOnFirstBeat': settings.hapticOnFirstBeat,
       'hapticOnTransition': settings.hapticOnTransition,
       'keepScreenAwake': settings.keepScreenAwake,
+      'executeRoutinesInBackground': settings.executeRoutinesInBackground,
+      'lastMetronomeBpm': settings.lastMetronomeBpm,
     };
     return jsonEncode(map);
   }
@@ -33,6 +35,8 @@ abstract final class SettingsMapper {
 
     final countdown = (decoded['transitionCountdownSeconds'] as num?)?.toInt() ?? 5;
     final volume = (decoded['transitionAlertVolume'] as num?)?.toDouble() ?? 0.8;
+    final lastBpm = (decoded['lastMetronomeBpm'] as num?)?.toInt() ?? 120;
+    final bgExec = (decoded['executeRoutinesInBackground'] as bool?) ?? true;
 
     return AppSettings(
       transitionCountdownSeconds: countdown.clamp(0, 60),
@@ -41,7 +45,8 @@ abstract final class SettingsMapper {
       hapticOnFirstBeat: (decoded['hapticOnFirstBeat'] as bool?) ?? false,
       hapticOnTransition: (decoded['hapticOnTransition'] as bool?) ?? true,
       keepScreenAwake: (decoded['keepScreenAwake'] as bool?) ?? true,
+      executeRoutinesInBackground: bgExec,
+      lastMetronomeBpm: lastBpm.clamp(20, 300),
     );
   }
 }
-
